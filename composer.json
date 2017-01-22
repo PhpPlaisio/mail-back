@@ -18,7 +18,7 @@
   },
   "autoload": {
     "psr-4": {
-      "SetBased\\Abc\\Mail\\": "src/"
+      "SetBased\\Abc\\Mail\\Command\\": "src"
     }
   }
 }

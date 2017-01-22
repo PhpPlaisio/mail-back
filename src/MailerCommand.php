@@ -1,6 +1,6 @@
 <?php
 //----------------------------------------------------------------------------------------------------------------------
-namespace SetBased\Abc\Command;
+namespace SetBased\Abc\Mail\Command;
 
 use SetBased\Abc\Abc;
 use SetBased\Abc\C;
