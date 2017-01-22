@@ -1,0 +1,240 @@
+<?php
+//----------------------------------------------------------------------------------------------------------------------
+namespace SetBased\Abc\Command;
+
+use SetBased\Abc\Abc;
+use SetBased\Abc\C;
+use SetBased\Exception\FallenException;
+use Symfony\Component\Console\Command\Command;
+
+//----------------------------------------------------------------------------------------------------------------------
+/**
+ * Abstract command for sending mail messages.
+ */
+abstract class MailerCommand extends Command
+{
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * If true this command will terminate.
+   *
+   * @var bool
+   */
+  static protected $terminate = false;
+
+  /**
+   * Array with domains for which we are authorized to send email.
+   *
+   * @var array
+   */
+  private $domains;
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Gets the list of domains for which we are authorized to send emails.
+   */
+  public function getAuthorizedDomains()
+  {
+    $domains = Abc::$DL->abcMailBackGetAuthorizedDomains();
+
+    foreach ($domains as $domain)
+    {
+      $this->domains[] = strtolower($domain['atd_domain_name']);
+    }
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Connects to the MySQL instance.
+   *
+   * @return void
+   *
+   * @api
+   * @since 1.0.0
+   */
+  abstract protected function connect();
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Disconnects from MySQL instance.
+   *
+   * @api
+   * @since 1.0.0
+   */
+  protected function disconnect()
+  {
+    Abc::$DL->disconnect();
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Sends a batch of mail messages.
+   */
+  protected function sendBatch()
+  {
+    $this->connect();
+    Abc::$DL->begin();
+
+    $this->getAuthorizedDomains();
+
+    do
+    {
+      $messages = Abc::$DL->abcMailBackGetUnsentMessages();
+      foreach ($messages as $message)
+      {
+        $this->sendMail($message);
+
+        if (self::$terminate) break;
+      }
+    } while (count($messages)==C::ABC_MAIL_BACK_BATCH_SIZE && !self::$terminate);
+
+    $this->disconnect();
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Sets the message body.
+   *
+   * @param \PHPMailer $mailer  The PHPMailer object.
+   * @param array      $message The details of the mail message.
+   *
+   * @api
+   * @since 1.0.0
+   */
+  protected function setBody($mailer, $message)
+  {
+    $blob = Abc::getInstance()->getBlobStore()->getBlob($message['cmp_id'], $message['blb_id_body']);
+
+    preg_match('/([^;]*)(;\s*charset=(.*))?/', $blob['blb_mime_type'], $matches);
+    $type    = trim($matches[1]);
+    $charset = trim($matches[3]);
+
+    $mailer->isHTML(($type=='text/html'));
+    $mailer->CharSet = $charset;
+    $mailer->Body    = $blob['blb_data'];
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Sets the transmitter of this mail message when the transmitter's address is from an unauthorized domain.
+   *
+   * @param \PHPMailer $mailer  The PHPMailer object.
+   * @param array      $message The details of the mail message.
+   *
+   * @return void
+   *
+   * @api
+   * @since 1.0.0
+   */
+  abstract protected function setUnauthorizedFrom($mailer, $message);
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Adds all headers of a mail message to a PHPMailer object.
+   *
+   * @param \PHPMailer $mailer  The PHPMailer object.
+   * @param array      $message The details of the mail message.
+   */
+  private function addHeaders($mailer, $message)
+  {
+    $headers = Abc::$DL->abcMailBackMessageGetHeaders($message['cmp_id'], $message['elm_id']);
+    print_r($headers);
+
+    foreach ($headers as $header)
+    {
+      switch ($header['ehd_id'])
+      {
+        case C::EHD_ID_TO:
+          $mailer->addAddress($header['emh_address'], $header['emh_name']);
+          break;
+
+        case C::EHD_ID_CC:
+          $mailer->addCC($header['emh_address'], $header['emh_name']);
+          break;
+
+        case C::EHD_ID_BCC:
+          $mailer->addBCC($header['emh_address'], $header['emh_name']);
+          break;
+
+        case C::EHD_ID_CUSTOM_HEADER:
+          $mailer->addCustomHeader($header['emh_custom_header']);
+          break;
+
+        case C::EHD_ID_CONFIRM_READING_TO:
+          $mailer->ConfirmReadingTo = $header['emh_address'];
+          break;
+
+        case C::EHD_ID_REPLY_TO:
+          $mailer->addReplyTo($header['emh_address'], $header['emh_name']);
+          break;
+
+        case C::EHD_ID_ATTACHMENT:
+          $blob = Abc::getInstance()->getBlobStore()->getBlob($message['cmp_id'], $header['blb_id']);
+          $mailer->addStringAttachment($blob['blb_data'], $blob['blb_filename']);
+          break;
+
+        default:
+          throw new FallenException('ehd_id', $header['ehd_id']);
+      }
+    }
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Sends actually the email message.
+   *
+   * @param array $message The details of the mail message.
+   */
+  private function sendMail($message)
+  {
+    Abc::$DL->abcMailBackMessageMarkAsPickedUp($message['cmp_id'], $message['elm_id']);
+    Abc::$DL->commit();
+
+    $mailer = new \PHPMailer();
+    $mailer->isSendmail();
+    $mailer->Subject = $message['elm_subject'];
+
+    $this->setBody($mailer, $message);
+    $this->setFrom($mailer, $message);
+    $this->addHeaders($mailer, $message);
+
+    $success = $mailer->send();
+    if ($success)
+    {
+      Abc::$DL->abcMailBackMessageMarkAsSent($message['cmp_id'], $message['elm_id']);
+      Abc::$DL->commit();
+    }
+    else
+    {
+      echo "Mailer Error: $mailer->ErrorInfo\n";
+    }
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Sets the transmitter of this mail message.
+   *
+   * @param \PHPMailer $mailer  The PHPMailer object.
+   * @param array      $message The details of the mail message.
+   */
+  private function setFrom($mailer, $message)
+  {
+    $domain = strtolower(substr($message['elm_address'], strpos($message['elm_address'], '@') + 1));
+    if (isset($this->domains[$domain]))
+    {
+      // We are authorized to send mail messages from this domain.
+      $mailer->From     = $message['elm_address'];
+      $mailer->FromName = $message['elm_name'];
+    }
+    else
+    {
+      // We are not authorized to send mail messages from this domain.
+      $this->setUnauthorizedFrom($mailer, $message);
+
+      $mailer->addReplyTo($message['elm_address'], $message['elm_name']);
+    }
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+}
+
+//----------------------------------------------------------------------------------------------------------------------

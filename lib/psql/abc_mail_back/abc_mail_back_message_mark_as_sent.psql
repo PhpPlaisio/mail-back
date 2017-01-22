@@ -1,0 +1,17 @@
+/**
+ * Marks a mail message as sent by the mailer process.
+ *
+ * @param p_cmp_id The ID of the company (safeguard).
+ * @param p_elm_id The ID of the mail message.
+ */
+create procedure abc_mail_back_message_mark_as_sent( in p_cmp_id @elm_message.cmp_id%type@,
+                                                     in p_elm_id @elm_message.elm_id%type@ )
+modifies sql data
+-- type: none
+begin
+  update ELM_MESSAGE
+  set    elm_sent = now()
+  where  cmp_id = p_cmp_id
+  and    elm_id = p_elm_id
+  ;
+end

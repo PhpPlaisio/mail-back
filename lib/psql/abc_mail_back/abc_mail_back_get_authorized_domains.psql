@@ -1,0 +1,11 @@
+/**
+ * Selects the domains for which we are authorized to send emails.
+ */
+create procedure abc_mail_back_get_authorized_domains()
+reads sql data
+-- type: rows
+begin
+  select atd_domain_name
+  from   ELM_AUTHORIZED_DOMAIN
+  ;
+end
