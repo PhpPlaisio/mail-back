@@ -169,11 +169,11 @@ abstract class MailerCommand extends Command
           break;
 
         case C::EHD_ID_MESSAGE_ID:
-          $mailer->MessageID = $header['emh_custom_header'];
+          $mailer->MessageID = $header['emh_value'];
           break;
 
         case C::EHD_ID_CUSTOM_HEADER:
-          $mailer->addCustomHeader($header['emh_custom_header']);
+          $mailer->addCustomHeader($header['emh_value']);
           break;
 
         case C::EHD_ID_CONFIRM_READING_TO:

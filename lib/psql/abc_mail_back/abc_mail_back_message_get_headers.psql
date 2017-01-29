@@ -14,7 +14,7 @@ begin
   ,      emh.ehd_id
   ,      emh.emh_address
   ,      emh.emh_name
-  ,      emh.emh_custom_header
+  ,      emh.emh_value
 
   ,      blb.blb_id
   ,      blb.blb_size
