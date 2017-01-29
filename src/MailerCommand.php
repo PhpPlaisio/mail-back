@@ -2,9 +2,11 @@
 //----------------------------------------------------------------------------------------------------------------------
 namespace SetBased\Abc\Mail\Command;
 
+use Psr\Log\LoggerInterface;
 use SetBased\Abc\Abc;
 use SetBased\Abc\C;
 use SetBased\Exception\FallenException;
+use SetBased\Exception\RuntimeException;
 use Symfony\Component\Console\Command\Command;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -20,6 +22,13 @@ abstract class MailerCommand extends Command
    * @var bool
    */
   static protected $terminate = false;
+
+  /**
+   * The logger.
+   *
+   * @var LoggerInterface
+   */
+  protected $logger;
 
   /**
    * Array with domains for which we are authorized to send email.
@@ -104,9 +113,13 @@ abstract class MailerCommand extends Command
   {
     $blob = Abc::getInstance()->getBlobStore()->getBlob($message['cmp_id'], $message['blb_id_body']);
 
-    preg_match('/([^;]*)(;\s*charset=(.*))?/', $blob['blb_mime_type'], $matches);
+    preg_match('/^([^;]*);\s*charset=(.*)$/', $blob['blb_mime_type'], $matches);
+    if (sizeof($matches)!=2)
+    {
+      throw new RuntimeException("Invalid mime type '%s'", $blob['blb_mime_type']);
+    }
     $type    = trim($matches[1]);
-    $charset = trim($matches[3]);
+    $charset = trim($matches[2]);
 
     $mailer->isHTML(($type=='text/html'));
     $mailer->CharSet = $charset;
@@ -155,6 +168,10 @@ abstract class MailerCommand extends Command
           $mailer->addBCC($header['emh_address'], $header['emh_name']);
           break;
 
+        case C::EHD_ID_MESSAGE_ID:
+          $mailer->MessageID = $header['emh_custom_header'];
+          break;
+
         case C::EHD_ID_CUSTOM_HEADER:
           $mailer->addCustomHeader($header['emh_custom_header']);
           break;
@@ -186,6 +203,8 @@ abstract class MailerCommand extends Command
    */
   private function sendMail($message)
   {
+    $this->logger->notice(sprintf('Sending message elm_id=%d', $message['elm_id']));
+
     Abc::$DL->abcMailBackMessageMarkAsPickedUp($message['cmp_id'], $message['elm_id']);
     Abc::$DL->commit();
 
@@ -205,7 +224,7 @@ abstract class MailerCommand extends Command
     }
     else
     {
-      echo "Mailer Error: $mailer->ErrorInfo\n";
+      $this->logger->error(sprintf('Sending message elm_id=%d failed: %s', $message['elm_id'], $mailer->ErrorInfo));
     }
   }
 

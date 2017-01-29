@@ -11,6 +11,7 @@
   "require": {
     "php": ">=5.4.0",
     "phpmailer/phpmailer": "5.*",
+    "psr/log": "1.*",
     "setbased/abc": "dev-master",
     "setbased/abc-mail-message": "dev-master",
     "setbased/exception": "1.*",
