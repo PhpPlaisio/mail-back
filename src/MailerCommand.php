@@ -114,7 +114,7 @@ abstract class MailerCommand extends Command
     $blob = Abc::getInstance()->getBlobStore()->getBlob($message['cmp_id'], $message['blb_id_body']);
 
     preg_match('/^([^;]*);\s*charset=(.*)$/', $blob['blb_mime_type'], $matches);
-    if (sizeof($matches)!=2)
+    if (sizeof($matches)!=3)
     {
       throw new RuntimeException("Invalid mime type '%s'", $blob['blb_mime_type']);
     }
@@ -150,43 +150,46 @@ abstract class MailerCommand extends Command
   private function addHeaders($mailer, $message)
   {
     $headers = Abc::$DL->abcMailBackMessageGetHeaders($message['cmp_id'], $message['elm_id']);
-    print_r($headers);
 
     foreach ($headers as $header)
     {
       switch ($header['ehd_id'])
       {
-        case C::EHD_ID_TO:
-          $mailer->addAddress($header['emh_address'], $header['emh_name']);
-          break;
-
-        case C::EHD_ID_CC:
-          $mailer->addCC($header['emh_address'], $header['emh_name']);
+        case C::EHD_ID_ATTACHMENT:
+          $blob = Abc::getInstance()->getBlobStore()->getBlob($message['cmp_id'], $header['blb_id']);
+          $mailer->addStringAttachment($blob['blb_data'], $blob['blb_filename']);
           break;
 
         case C::EHD_ID_BCC:
           $mailer->addBCC($header['emh_address'], $header['emh_name']);
           break;
 
-        case C::EHD_ID_MESSAGE_ID:
-          $mailer->MessageID = $header['emh_value'];
-          break;
-
-        case C::EHD_ID_CUSTOM_HEADER:
-          $mailer->addCustomHeader($header['emh_value']);
+        case C::EHD_ID_CC:
+          $mailer->addCC($header['emh_address'], $header['emh_name']);
           break;
 
         case C::EHD_ID_CONFIRM_READING_TO:
           $mailer->ConfirmReadingTo = $header['emh_address'];
           break;
 
+        case C::EHD_ID_CUSTOM_HEADER:
+          $mailer->addCustomHeader($header['emh_value']);
+          break;
+
+        case C::EHD_ID_MESSAGE_ID:
+          $mailer->MessageID = $header['emh_value'];
+          break;
+
         case C::EHD_ID_REPLY_TO:
           $mailer->addReplyTo($header['emh_address'], $header['emh_name']);
           break;
 
-        case C::EHD_ID_ATTACHMENT:
-          $blob = Abc::getInstance()->getBlobStore()->getBlob($message['cmp_id'], $header['blb_id']);
-          $mailer->addStringAttachment($blob['blb_data'], $blob['blb_filename']);
+        case C::EHD_ID_SENDER:
+          $mailer->Sender = $header['emh_address'];
+          break;
+
+        case C::EHD_ID_TO:
+          $mailer->addAddress($header['emh_address'], $header['emh_name']);
           break;
 
         default:
@@ -203,28 +206,40 @@ abstract class MailerCommand extends Command
    */
   private function sendMail($message)
   {
-    $this->logger->notice(sprintf('Sending message elm_id=%d', $message['elm_id']));
-
-    Abc::$DL->abcMailBackMessageMarkAsPickedUp($message['cmp_id'], $message['elm_id']);
-    Abc::$DL->commit();
-
-    $mailer = new \PHPMailer();
-    $mailer->isSendmail();
-    $mailer->Subject = $message['elm_subject'];
-
-    $this->setBody($mailer, $message);
-    $this->setFrom($mailer, $message);
-    $this->addHeaders($mailer, $message);
-
-    $success = $mailer->send();
-    if ($success)
+    try
     {
-      Abc::$DL->abcMailBackMessageMarkAsSent($message['cmp_id'], $message['elm_id']);
+      $this->logger->notice(sprintf('Sending message elm_id=%d', $message['elm_id']));
+
+      Abc::$DL->abcMailBackMessageMarkAsPickedUp($message['cmp_id'], $message['elm_id']);
       Abc::$DL->commit();
+
+      if ($message['elm_number_from']!=1)
+      {
+        throw new RuntimeException('PHPMailer does not support multiple from addresses');
+      }
+
+      $mailer = new \PHPMailer();
+      $mailer->isSendmail();
+      $mailer->Subject = $message['elm_subject'];
+
+      $this->setBody($mailer, $message);
+      $this->setFrom($mailer, $message);
+      $this->addHeaders($mailer, $message);
+
+      $success = $mailer->send();
+      if ($success)
+      {
+        Abc::$DL->abcMailBackMessageMarkAsSent($message['cmp_id'], $message['elm_id']);
+        Abc::$DL->commit();
+      }
+      else
+      {
+        $this->logger->error(sprintf('Sending message elm_id=%d failed: %s', $message['elm_id'], $mailer->ErrorInfo));
+      }
     }
-    else
+    catch (\Exception $exception)
     {
-      $this->logger->error(sprintf('Sending message elm_id=%d failed: %s', $message['elm_id'], $mailer->ErrorInfo));
+      $this->logger->critical($exception);
     }
   }
 
