@@ -10,7 +10,7 @@ modifies sql data
 -- type: none
 begin
   update ELM_MESSAGE
-  set    elm_pickuped = now()
+  set    elm_picked_up = now()
   where  cmp_id = p_cmp_id
   and    elm_id = p_elm_id
   ;

@@ -16,8 +16,8 @@ begin
   ,      elm_number_cc
   ,      elm_number_bcc
   from   ELM_MESSAGE
-  where  elm_pickuped is null
-  and    elm_sent     is null
+  where  elm_picked_up is null
+  and    elm_sent      is null
   order by elm_id
   limit 0, @ABC_MAIL_BACK_BATCH_SIZE@
   ;
