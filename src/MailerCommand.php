@@ -9,7 +9,6 @@ use SetBased\Exception\FallenException;
 use SetBased\Exception\RuntimeException;
 use Symfony\Component\Console\Command\Command;
 
-//----------------------------------------------------------------------------------------------------------------------
 /**
  * Abstract command for sending mail messages.
  */
@@ -111,7 +110,7 @@ abstract class MailerCommand extends Command
    */
   protected function setBody($mailer, $message)
   {
-    $blob = Abc::getInstance()->getBlobStore()->getBlob($message['cmp_id'], $message['blb_id_body']);
+    $blob = Abc::$abc->getBlobStore()->getBlob($message['cmp_id'], $message['blb_id_body']);
 
     preg_match('/^([^;]*);\s*charset=(.*)$/', $blob['blb_mime_type'], $matches);
     if (sizeof($matches)!=3)
@@ -156,7 +155,7 @@ abstract class MailerCommand extends Command
       switch ($header['ehd_id'])
       {
         case C::EHD_ID_ATTACHMENT:
-          $blob = Abc::getInstance()->getBlobStore()->getBlob($message['cmp_id'], $header['blb_id']);
+          $blob = Abc::$abc->getBlobStore()->getBlob($message['cmp_id'], $header['blb_id']);
           $mailer->addStringAttachment($blob['blb_data'], $blob['blb_filename']);
           break;
 

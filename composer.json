@@ -12,14 +12,21 @@
     "php": ">=7.0.0",
     "phpmailer/phpmailer": "^5.2.23",
     "psr/log": "^1.0.0",
-    "setbased/abc": "^0.10.0",
+    "setbased/abc": "^0.10.18",
     "setbased/abc-mail-message": "^0.9.0",
     "setbased/exception": "^1.0.0",
     "symfony/console": "^3.0.0"
   },
   "autoload": {
     "psr-4": {
-      "SetBased\\Abc\\Mail\\Command\\": "src"
+      "SetBased\\Abc\\Mail\\Command\\": "src/"
     }
+  },
+  "require-dev": {
+    "phing/phing": "^2.0.0",
+    "phpunit/phpunit": "^6.0.0"
+  },
+  "config": {
+    "bin-dir": "bin/"
   }
 }
