@@ -63,6 +63,20 @@ abstract class MailerCommand extends Command
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
+   * This mailer sends mail messages for all companies in the databases. Changes the company to the company of the
+   * mail message currently being send.
+   *
+   * @param int $cmpId The ID of the new company.
+   *
+   * @return void
+   *
+   * @api
+   * @since 1.0.0
+   */
+  abstract protected function changeCompany($cmpId);
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
    * Disconnects from MySQL instance.
    *
    * @api
@@ -110,7 +124,7 @@ abstract class MailerCommand extends Command
    */
   protected function setBody($mailer, $message)
   {
-    $blob = Abc::$abc->getBlobStore()->getBlob($message['cmp_id'], $message['blb_id_body']);
+    $blob = Abc::$abc->getBlobStore()->getBlob($message['blb_id_body']);
 
     preg_match('/^([^;]*);\s*charset=(.*)$/', $blob['blb_mime_type'], $matches);
     if (sizeof($matches)!=3)
@@ -155,7 +169,7 @@ abstract class MailerCommand extends Command
       switch ($header['ehd_id'])
       {
         case C::EHD_ID_ATTACHMENT:
-          $blob = Abc::$abc->getBlobStore()->getBlob($message['cmp_id'], $header['blb_id']);
+          $blob = Abc::$abc->getBlobStore()->getBlob($header['blb_id']);
           $mailer->addStringAttachment($blob['blb_data'], $blob['blb_filename']);
           break;
 
@@ -208,6 +222,8 @@ abstract class MailerCommand extends Command
     try
     {
       $this->logger->notice(sprintf('Sending message elm_id=%d', $message['elm_id']));
+
+      $this->changeCompany($message['cmp_id']);
 
       Abc::$DL->abcMailBackMessageMarkAsPickedUp($message['cmp_id'], $message['elm_id']);
       Abc::$DL->commit();
