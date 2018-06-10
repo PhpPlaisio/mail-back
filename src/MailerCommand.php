@@ -46,7 +46,7 @@ abstract class MailerCommand extends Command
 
     foreach ($domains as $domain)
     {
-      $this->domains[] = strtolower($domain['atd_domain_name']);
+      $this->domains[mb_strtolower($domain['atd_domain_name'])] = true;
     }
   }
 
@@ -267,7 +267,7 @@ abstract class MailerCommand extends Command
    */
   private function setFrom($mailer, $message)
   {
-    $domain = strtolower(substr($message['elm_address'], strpos($message['elm_address'], '@') + 1));
+    $domain = mb_strtolower(substr($message['elm_address'], strpos($message['elm_address'], '@') + 1));
     if (isset($this->domains[$domain]))
     {
       // We are authorized to send mail messages from this domain.
