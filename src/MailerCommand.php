@@ -40,7 +40,7 @@ abstract class MailerCommand extends Command
   /**
    * Gets the list of domains for which we are authorized to send emails.
    */
-  public function getAuthorizedDomains()
+  public function getAuthorizedDomains(): void
   {
     $domains = Abc::$DL->abcMailBackGetAuthorizedDomains();
 
@@ -59,7 +59,7 @@ abstract class MailerCommand extends Command
    * @api
    * @since 1.0.0
    */
-  abstract protected function connect();
+  abstract protected function connect(): void;
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
@@ -73,7 +73,7 @@ abstract class MailerCommand extends Command
    * @api
    * @since 1.0.0
    */
-  abstract protected function changeCompany($cmpId);
+  abstract protected function changeCompany(int $cmpId): void;
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
@@ -82,7 +82,7 @@ abstract class MailerCommand extends Command
    * @api
    * @since 1.0.0
    */
-  protected function disconnect()
+  protected function disconnect(): void
   {
     Abc::$DL->disconnect();
   }
@@ -91,7 +91,7 @@ abstract class MailerCommand extends Command
   /**
    * Sends a batch of mail messages.
    */
-  protected function sendBatch()
+  protected function sendBatch(): void
   {
     $this->connect();
     Abc::$DL->begin();
@@ -122,7 +122,7 @@ abstract class MailerCommand extends Command
    * @api
    * @since 1.0.0
    */
-  protected function setBody($mailer, $message)
+  protected function setBody(\PHPMailer $mailer, array $message): void
   {
     $blob = Abc::$abc->getBlobStore()->getBlob($message['blb_id_body']);
 
@@ -151,7 +151,7 @@ abstract class MailerCommand extends Command
    * @api
    * @since 1.0.0
    */
-  abstract protected function setUnauthorizedFrom($mailer, $message);
+  abstract protected function setUnauthorizedFrom(\PHPMailer $mailer, array $message): void;
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
@@ -160,7 +160,7 @@ abstract class MailerCommand extends Command
    * @param \PHPMailer $mailer  The PHPMailer object.
    * @param array      $message The details of the mail message.
    */
-  private function addHeaders($mailer, $message)
+  private function addHeaders(\PHPMailer $mailer, array $message): void
   {
     $headers = Abc::$DL->abcMailBackMessageGetHeaders($message['cmp_id'], $message['elm_id']);
 
@@ -217,7 +217,7 @@ abstract class MailerCommand extends Command
    *
    * @param array $message The details of the mail message.
    */
-  private function sendMail($message)
+  private function sendMail(array $message): void
   {
     try
     {
@@ -265,7 +265,7 @@ abstract class MailerCommand extends Command
    * @param \PHPMailer $mailer  The PHPMailer object.
    * @param array      $message The details of the mail message.
    */
-  private function setFrom($mailer, $message)
+  private function setFrom(\PHPMailer $mailer, array $message): void
   {
     $domain = mb_strtolower(substr($message['elm_address'], strpos($message['elm_address'], '@') + 1));
     if (isset($this->domains[$domain]))
