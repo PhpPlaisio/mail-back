@@ -214,7 +214,7 @@ abstract class MailerCommand extends Command
       // Implicitly add ReplyTo header if not set explicitly.
       if (!$replyTo)
       {
-        $mailer->addReplyTo($message['elm_address'],  $message['elm_name']);
+        $mailer->addReplyTo($message['elm_address'], $message['elm_name']);
       }
     }
   }
