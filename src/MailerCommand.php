@@ -164,6 +164,7 @@ abstract class MailerCommand extends Command
   {
     $headers = Abc::$DL->abcMailBackMessageGetHeaders($message['cmp_id'], $message['elm_id']);
 
+    $replyTo = false;
     foreach ($headers as $header)
     {
       switch ($header['ehd_id'])
@@ -195,6 +196,7 @@ abstract class MailerCommand extends Command
 
         case C::EHD_ID_REPLY_TO:
           $mailer->addReplyTo($header['emh_address'], $header['emh_name']);
+          $replyTo = true;
           break;
 
         case C::EHD_ID_SENDER:
@@ -207,6 +209,12 @@ abstract class MailerCommand extends Command
 
         default:
           throw new FallenException('ehd_id', $header['ehd_id']);
+      }
+
+      // Implicitly add ReplyTo header if not set explicitly.
+      if (!$replyTo)
+      {
+        $mailer->addReplyTo($message['elm_address'],  $message['elm_name']);
       }
     }
   }
@@ -278,8 +286,6 @@ abstract class MailerCommand extends Command
     {
       // We are not authorized to send mail messages from this domain.
       $this->setUnauthorizedFrom($mailer, $message);
-
-      $mailer->addReplyTo($message['elm_address'], $message['elm_name']);
     }
   }
 
