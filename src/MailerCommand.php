@@ -1,7 +1,9 @@
 <?php
+declare(strict_types=1);
 
 namespace SetBased\Abc\Mail\Command;
 
+use PHPMailer\PHPMailer\PHPMailer;
 use Psr\Log\LoggerInterface;
 use SetBased\Abc\Abc;
 use SetBased\Abc\C;
@@ -37,6 +39,7 @@ abstract class MailerCommand extends Command
   private $domains;
 
   //--------------------------------------------------------------------------------------------------------------------
+
   /**
    * Gets the list of domains for which we are authorized to send emails.
    */
@@ -52,17 +55,6 @@ abstract class MailerCommand extends Command
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
-   * Connects to the MySQL instance.
-   *
-   * @return void
-   *
-   * @api
-   * @since 1.0.0
-   */
-  abstract protected function connect(): void;
-
-  //--------------------------------------------------------------------------------------------------------------------
-  /**
    * This mailer sends mail messages for all companies in the databases. Changes the company to the company of the
    * mail message currently being send.
    *
@@ -74,6 +66,17 @@ abstract class MailerCommand extends Command
    * @since 1.0.0
    */
   abstract protected function changeCompany(int $cmpId): void;
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Connects to the MySQL instance.
+   *
+   * @return void
+   *
+   * @api
+   * @since 1.0.0
+   */
+  abstract protected function connect(): void;
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
@@ -116,13 +119,13 @@ abstract class MailerCommand extends Command
   /**
    * Sets the message body.
    *
-   * @param \PHPMailer $mailer  The PHPMailer object.
-   * @param array      $message The details of the mail message.
+   * @param PHPMailer $mailer  The PHPMailer object.
+   * @param array     $message The details of the mail message.
    *
    * @api
    * @since 1.0.0
    */
-  protected function setBody(\PHPMailer $mailer, array $message): void
+  protected function setBody(PHPMailer $mailer, array $message): void
   {
     $blob = Abc::$abc->getBlobStore()->getBlob($message['blb_id_body']);
 
@@ -143,24 +146,24 @@ abstract class MailerCommand extends Command
   /**
    * Sets the transmitter of this mail message when the transmitter's address is from an unauthorized domain.
    *
-   * @param \PHPMailer $mailer  The PHPMailer object.
-   * @param array      $message The details of the mail message.
+   * @param PHPMailer $mailer  The PHPMailer object.
+   * @param array     $message The details of the mail message.
    *
    * @return void
    *
    * @api
    * @since 1.0.0
    */
-  abstract protected function setUnauthorizedFrom(\PHPMailer $mailer, array $message): void;
+  abstract protected function setUnauthorizedFrom(PHPMailer $mailer, array $message): void;
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
    * Adds all headers of a mail message to a PHPMailer object.
    *
-   * @param \PHPMailer $mailer  The PHPMailer object.
-   * @param array      $message The details of the mail message.
+   * @param PHPMailer $mailer  The PHPMailer object.
+   * @param array     $message The details of the mail message.
    */
-  private function addHeaders(\PHPMailer $mailer, array $message): void
+  private function addHeaders(PHPMailer $mailer, array $message): void
   {
     $headers = Abc::$DL->abcMailBackMessageGetHeaders($message['cmp_id'], $message['elm_id']);
 
@@ -241,7 +244,7 @@ abstract class MailerCommand extends Command
         throw new RuntimeException('PHPMailer does not support multiple from addresses');
       }
 
-      $mailer = new \PHPMailer();
+      $mailer = new PHPMailer();
       $mailer->isSendmail();
       $mailer->Subject = $message['elm_subject'];
 
@@ -270,10 +273,10 @@ abstract class MailerCommand extends Command
   /**
    * Sets the transmitter of this mail message.
    *
-   * @param \PHPMailer $mailer  The PHPMailer object.
-   * @param array      $message The details of the mail message.
+   * @param PHPMailer $mailer  The PHPMailer object.
+   * @param array     $message The details of the mail message.
    */
-  private function setFrom(\PHPMailer $mailer, array $message): void
+  private function setFrom(PHPMailer $mailer, array $message): void
   {
     $domain = mb_strtolower(substr($message['elm_address'], strpos($message['elm_address'], '@') + 1));
     if (isset($this->domains[$domain]))

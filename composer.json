@@ -10,7 +10,7 @@
   "license": "MIT",
   "require": {
     "php": ">=7.1.0",
-    "phpmailer/phpmailer": "^5.2.23",
+    "phpmailer/phpmailer": "^6.0.0",
     "psr/log": "^1.0.0",
     "setbased/abc": "^0.10.23",
     "setbased/abc-mail-message": "^0.9.1",
@@ -23,8 +23,7 @@
     }
   },
   "require-dev": {
-    "phing/phing": "^2.0.0",
-    "phpunit/phpunit": "^6.0.0"
+    "phing/phing": "^2.0.0"
   },
   "config": {
     "bin-dir": "bin/"
