@@ -14,16 +14,16 @@
     "psr/log": "^1.0.0",
     "setbased/abc": "^0.10.23",
     "setbased/abc-mail-message": "^0.9.1",
-    "setbased/exception": "^1.0.0",
-    "symfony/console": "^3.0.0 || 4.0.0"
+    "setbased/exception": "^2.0.0",
+    "symfony/console": "^4.0.0"
+  },
+  "require-dev": {
+    "phing/phing": "^2.0.0"
   },
   "autoload": {
     "psr-4": {
       "SetBased\\Abc\\Mail\\Command\\": "src/"
     }
-  },
-  "require-dev": {
-    "phing/phing": "^2.0.0"
   },
   "config": {
     "bin-dir": "bin/"
