@@ -1,12 +1,11 @@
 {
   "name": "setbased/abc-mail-back",
-  "description": "ABC-Framework: Mail - Back",
+  "description": "SetBased ABC-Framework: Mail - Back",
   "keywords": [
-    "ABC-Framework",
+    "SetBased ABC-Framework",
     "Mail",
     "Message"
   ],
-  "type": "library",
   "license": "MIT",
   "require": {
     "php": ">=7.1.0",
