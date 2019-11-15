@@ -15,7 +15,7 @@ begin
   ,      elm_number_to
   ,      elm_number_cc
   ,      elm_number_bcc
-  from   ELM_MESSAGE
+  from   ABC_MAIL_MESSAGE
   where  elm_picked_up is null
   and    elm_sent      is null
   order by elm_id

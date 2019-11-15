@@ -4,27 +4,20 @@
  * @param p_cmp_id The ID of the company (safeguard).
  * @param p_elm_id The ID of the mail message.
  */
-create procedure abc_mail_back_message_get_headers(in p_cmp_id @elm_message_header.cmp_id%type@,
-                                                   in p_elm_id @elm_message_header.elm_id%type@)
+create procedure abc_mail_back_message_get_headers(in p_cmp_id @abc_mail_message_header.cmp_id%type@,
+                                                   in p_elm_id @abc_mail_message_header.elm_id%type@)
 reads sql data
 -- type: rows
 begin
-  select emh.emh_id
-  ,      emh.elm_id
-  ,      emh.ehd_id
-  ,      emh.emh_address
-  ,      emh.emh_name
-  ,      emh.emh_value
-
-  ,      blb.blb_id
-  ,      blb.blb_size
-  ,      blb.blb_filename
-  ,      blb.blb_mime_type
-  ,      blb.blb_timestamp
-  from            ELM_MESSAGE_HEADER emh
-  left outer join ABC_BLOB           blb  on  blb.blb_id = emh.blb_id
-  where  emh.cmp_id = p_cmp_id
-  and    emh.elm_id = p_elm_id
-  order by emh.emh_id
+  select emh_id
+  ,      ehd_id
+  ,      elm_id
+  ,      emh_address
+  ,      emh_name
+  ,      emh_value
+  from   ABC_MAIL_MESSAGE_HEADER
+  where  cmp_id = p_cmp_id
+  and    elm_id = p_elm_id
+  order by emh_id
   ;
 end

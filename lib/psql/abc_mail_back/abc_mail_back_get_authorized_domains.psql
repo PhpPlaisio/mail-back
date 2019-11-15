@@ -6,6 +6,6 @@ reads sql data
 -- type: rows
 begin
   select atd_domain_name
-  from   ELM_AUTHORIZED_DOMAIN
+  from   ABC_MAIL_AUTHORIZED_DOMAIN
   ;
 end
