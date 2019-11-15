@@ -1,12 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace SetBased\Abc\Mail\Command;
+namespace Plaisio\Mail\Command;
 
+use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
+use Plaisio\C;
+use Plaisio\Kernel\Nub;
 use Psr\Log\LoggerInterface;
-use SetBased\Abc\Abc;
-use SetBased\Abc\C;
 use SetBased\Exception\FallenException;
 use SetBased\Exception\RuntimeException;
 use Symfony\Component\Console\Command\Command;
@@ -39,13 +40,12 @@ abstract class MailerCommand extends Command
   private $domains;
 
   //--------------------------------------------------------------------------------------------------------------------
-
   /**
    * Gets the list of domains for which we are authorized to send emails.
    */
   public function getAuthorizedDomains(): void
   {
-    $domains = Abc::$DL->abcMailBackGetAuthorizedDomains();
+    $domains = Nub::$DL->abcMailBackGetAuthorizedDomains();
 
     foreach ($domains as $domain)
     {
@@ -87,7 +87,7 @@ abstract class MailerCommand extends Command
    */
   protected function disconnect(): void
   {
-    Abc::$DL->disconnect();
+    Nub::$DL->disconnect();
   }
 
   //--------------------------------------------------------------------------------------------------------------------
@@ -97,13 +97,13 @@ abstract class MailerCommand extends Command
   protected function sendBatch(): void
   {
     $this->connect();
-    Abc::$DL->begin();
+    Nub::$DL->begin();
 
     $this->getAuthorizedDomains();
 
     do
     {
-      $messages = Abc::$DL->abcMailBackGetUnsentMessages();
+      $messages = Nub::$DL->abcMailBackGetUnsentMessages();
       foreach ($messages as $message)
       {
         $this->sendMail($message);
@@ -127,7 +127,7 @@ abstract class MailerCommand extends Command
    */
   protected function setBody(PHPMailer $mailer, array $message): void
   {
-    $blob = Abc::$abc->getBlobStore()->getBlob($message['blb_id_body']);
+    $blob = Nub::$nub->getBlobStore()->getBlob($message['blb_id_body']);
 
     preg_match('/^([^;]*);\s*charset=(.*)$/', $blob['blb_mime_type'], $matches);
     if (sizeof($matches)!=3)
@@ -162,10 +162,12 @@ abstract class MailerCommand extends Command
    *
    * @param PHPMailer $mailer  The PHPMailer object.
    * @param array     $message The details of the mail message.
+   *
+   * @throws Exception
    */
   private function addHeaders(PHPMailer $mailer, array $message): void
   {
-    $headers = Abc::$DL->abcMailBackMessageGetHeaders($message['cmp_id'], $message['elm_id']);
+    $headers = Nub::$DL->abcMailBackMessageGetHeaders($message['cmp_id'], $message['elm_id']);
 
     $replyTo = false;
     foreach ($headers as $header)
@@ -173,7 +175,7 @@ abstract class MailerCommand extends Command
       switch ($header['ehd_id'])
       {
         case C::EHD_ID_ATTACHMENT:
-          $blob = Abc::$abc->getBlobStore()->getBlob($header['blb_id']);
+          $blob = Nub::$nub->getBlobStore()->getBlob($header['blb_id']);
           $mailer->addStringAttachment($blob['blb_data'], $blob['blb_filename']);
           break;
 
@@ -236,8 +238,8 @@ abstract class MailerCommand extends Command
 
       $this->changeCompany($message['cmp_id']);
 
-      Abc::$DL->abcMailBackMessageMarkAsPickedUp($message['cmp_id'], $message['elm_id']);
-      Abc::$DL->commit();
+      Nub::$DL->abcMailBackMessageMarkAsPickedUp($message['cmp_id'], $message['elm_id']);
+      Nub::$DL->commit();
 
       if ($message['elm_number_from']!=1)
       {
@@ -255,8 +257,8 @@ abstract class MailerCommand extends Command
       $success = $mailer->send();
       if ($success)
       {
-        Abc::$DL->abcMailBackMessageMarkAsSent($message['cmp_id'], $message['elm_id']);
-        Abc::$DL->commit();
+        Nub::$DL->abcMailBackMessageMarkAsSent($message['cmp_id'], $message['elm_id']);
+        Nub::$DL->commit();
       }
       else
       {
