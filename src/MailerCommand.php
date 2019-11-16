@@ -6,6 +6,7 @@ namespace Plaisio\Mail\Command;
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 use Plaisio\C;
+use Plaisio\CompanyResolver\UniCompanyResolver;
 use Plaisio\Kernel\Nub;
 use Psr\Log\LoggerInterface;
 use SetBased\Exception\FallenException;
@@ -18,6 +19,20 @@ use Symfony\Component\Console\Command\Command;
 abstract class MailerCommand extends Command
 {
   //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * The maximum number of unsent mails processed per batch.
+   *
+   * @var int
+   */
+  static protected $batchSize = 100;
+
+  /**
+   * The basename of the lock file.
+   *
+   * @var string
+   */
+  protected static $lockFilename = 'mailer.lock';
+
   /**
    * If true this command will terminate.
    *
@@ -55,6 +70,20 @@ abstract class MailerCommand extends Command
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
+   * Returns the path to the lock file.
+   *
+   * @return string
+   *
+   * @api
+   * @since 1.0.0
+   */
+  public function lockFilePath(): string
+  {
+    return Nub::$dirs->lockDir().'/'.static::$lockFilename;
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
    * This mailer sends mail messages for all companies in the databases. Changes the company to the company of the
    * mail message currently being send.
    *
@@ -65,7 +94,13 @@ abstract class MailerCommand extends Command
    * @api
    * @since 1.0.0
    */
-  abstract protected function changeCompany(int $cmpId): void;
+  protected function changeCompany(int $cmpId): void
+  {
+    if (Nub::$companyResolver->getCmpId()!=$cmpId)
+    {
+      Nub::$companyResolver = new UniCompanyResolver($cmpId);
+    }
+  }
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
@@ -77,6 +112,29 @@ abstract class MailerCommand extends Command
    * @since 1.0.0
    */
   abstract protected function connect(): void;
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Creates the lock file.
+   */
+  protected function createLockFile(): void
+  {
+    file_put_contents($this->lockFilePath(), getmypid());
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
+   * Creates and initializes a PHPMailer object.
+   *
+   * This function might reuse an exiting PHPMailer object (with SMTPKeepAlive and clearing all addresses, headers,
+   * attachments).
+   *
+   * @return PHPMailer
+   *
+   * @api
+   * @since 1.0.0
+   */
+  abstract protected function createMailer(): PHPMailer;
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
@@ -92,6 +150,15 @@ abstract class MailerCommand extends Command
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
+   * Removes the PID file.
+   */
+  protected function removeLockFile(): void
+  {
+    unlink($this->lockFilePath());
+  }
+
+  //--------------------------------------------------------------------------------------------------------------------
+  /**
    * Sends a batch of mail messages.
    */
   protected function sendBatch(): void
@@ -103,14 +170,12 @@ abstract class MailerCommand extends Command
 
     do
     {
-      $messages = Nub::$DL->abcMailBackGetUnsentMessages();
+      $messages = Nub::$DL->abcMailBackGetUnsentMessages(static::$batchSize);
       foreach ($messages as $message)
       {
         $this->sendMail($message);
-
-        if (self::$terminate) break;
       }
-    } while (count($messages)==C::ABC_MAIL_BACK_BATCH_SIZE && !self::$terminate);
+    } while (count($messages)==static::$batchSize && !self::$terminate);
 
     $this->disconnect();
   }
@@ -246,8 +311,7 @@ abstract class MailerCommand extends Command
         throw new RuntimeException('PHPMailer does not support multiple from addresses');
       }
 
-      $mailer = new PHPMailer();
-      $mailer->isSendmail();
+      $mailer          = $this->createMailer();
       $mailer->Subject = $message['elm_subject'];
 
       $this->setBody($mailer, $message);

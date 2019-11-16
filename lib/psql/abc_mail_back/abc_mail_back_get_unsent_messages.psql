@@ -1,7 +1,9 @@
 /**
  * Selects a batch of unsent mail messages.
+ *
+ * @param p_bath_size The maximum number of unsent mails selected.
  */
-create procedure abc_mail_back_get_unsent_messages()
+create procedure abc_mail_back_get_unsent_messages(in p_bath_size bigint)
 reads sql data
 -- type: rows
 begin
@@ -19,6 +21,6 @@ begin
   where  elm_picked_up is null
   and    elm_sent      is null
   order by elm_id
-  limit 0, @ABC_MAIL_BACK_BATCH_SIZE@
+  limit 0, p_bath_size
   ;
 end
