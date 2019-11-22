@@ -10,6 +10,7 @@ reads sql data
 -- type: rows
 begin
   select emh_id
+  ,      blb_id
   ,      ehd_id
   ,      elm_id
   ,      emh_address
