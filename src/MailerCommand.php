@@ -7,7 +7,7 @@ use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 use Plaisio\C;
 use Plaisio\CompanyResolver\UniCompanyResolver;
-use Plaisio\Kernel\Nub;
+use Plaisio\PlaisioKernel;
 use Psr\Log\LoggerInterface;
 use SetBased\Exception\FallenException;
 use SetBased\Exception\RuntimeException;
@@ -48,6 +48,13 @@ abstract class MailerCommand extends Command
   protected $logger;
 
   /**
+   * The kernel of PhpPlaisio.
+   *
+   * @var PlaisioKernel
+   */
+  protected $nub;
+
+  /**
    * Array with domains for which we are authorized to send email.
    *
    * @var array
@@ -60,7 +67,7 @@ abstract class MailerCommand extends Command
    */
   public function getAuthorizedDomains(): void
   {
-    $domains = Nub::$nub->DL->abcMailBackGetAuthorizedDomains();
+    $domains = $this->nub->DL->abcMailBackGetAuthorizedDomains();
 
     foreach ($domains as $domain)
     {
@@ -79,7 +86,7 @@ abstract class MailerCommand extends Command
    */
   public function lockFilePath(): string
   {
-    return Nub::$nub->dirs->lockDir().'/'.static::$lockFilename;
+    return $this->nub->dirs->lockDir().'/'.static::$lockFilename;
   }
 
   //--------------------------------------------------------------------------------------------------------------------
@@ -96,9 +103,9 @@ abstract class MailerCommand extends Command
    */
   protected function changeCompany(int $cmpId): void
   {
-    if (Nub::$nub->companyResolver->getCmpId()!=$cmpId)
+    if ($this->nub->company->cmpId!=$cmpId)
     {
-      Nub::$nub->companyResolver = new UniCompanyResolver($cmpId);
+      $this->nub->company = new UniCompanyResolver($cmpId);
     }
   }
 
@@ -145,7 +152,7 @@ abstract class MailerCommand extends Command
    */
   protected function disconnect(): void
   {
-    Nub::$nub->DL->disconnect();
+    $this->nub->DL->disconnect();
   }
 
   //--------------------------------------------------------------------------------------------------------------------
@@ -164,13 +171,13 @@ abstract class MailerCommand extends Command
   protected function sendBatch(): void
   {
     $this->connect();
-    Nub::$nub->DL->begin();
+    $this->nub->DL->begin();
 
     $this->getAuthorizedDomains();
 
     do
     {
-      $messages = Nub::$nub->DL->abcMailBackGetUnsentMessages(static::$batchSize);
+      $messages = $this->nub->DL->abcMailBackGetUnsentMessages(static::$batchSize);
       foreach ($messages as $message)
       {
         $this->sendMail($message);
@@ -192,7 +199,7 @@ abstract class MailerCommand extends Command
    */
   protected function setBody(PHPMailer $mailer, array $message): void
   {
-    $blob = Nub::$nub->blobStore->getBlob($message['blb_id_body']);
+    $blob = $this->nub->blob->getBlob($message['blb_id_body']);
 
     preg_match('/^([^;]*);\s*charset=(.*)$/', $blob['blb_mime_type'], $matches);
     if (sizeof($matches)!=3)
@@ -232,7 +239,7 @@ abstract class MailerCommand extends Command
    */
   private function addHeaders(PHPMailer $mailer, array $message): void
   {
-    $headers = Nub::$nub->DL->abcMailBackMessageGetHeaders($message['cmp_id'], $message['elm_id']);
+    $headers = $this->nub->DL->abcMailBackMessageGetHeaders($message['cmp_id'], $message['elm_id']);
 
     $replyTo = false;
     foreach ($headers as $header)
@@ -240,7 +247,7 @@ abstract class MailerCommand extends Command
       switch ($header['ehd_id'])
       {
         case C::EHD_ID_ATTACHMENT:
-          $blob = Nub::$nub->blobStore->getBlob($header['blb_id']);
+          $blob = $this->nub->blobStore->getBlob($header['blb_id']);
           $mailer->addStringAttachment($blob['blb_data'], $blob['blb_filename']);
           break;
 
@@ -303,8 +310,8 @@ abstract class MailerCommand extends Command
 
       $this->changeCompany($message['cmp_id']);
 
-      Nub::$nub->DL->abcMailBackMessageMarkAsPickedUp($message['cmp_id'], $message['elm_id']);
-      Nub::$nub->DL->commit();
+      $this->nub->DL->abcMailBackMessageMarkAsPickedUp($message['cmp_id'], $message['elm_id']);
+      $this->nub->DL->commit();
 
       if ($message['elm_number_from']!=1)
       {
@@ -321,8 +328,8 @@ abstract class MailerCommand extends Command
       $success = $mailer->send();
       if ($success)
       {
-        Nub::$nub->DL->abcMailBackMessageMarkAsSent($message['cmp_id'], $message['elm_id']);
-        Nub::$nub->DL->commit();
+        $this->nub->DL->abcMailBackMessageMarkAsSent($message['cmp_id'], $message['elm_id']);
+        $this->nub->DL->commit();
       }
       else
       {
