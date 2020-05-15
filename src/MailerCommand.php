@@ -247,7 +247,7 @@ abstract class MailerCommand extends Command
       switch ($header['ehd_id'])
       {
         case C::EHD_ID_ATTACHMENT:
-          $blob = $this->nub->blobStore->getBlob($header['blb_id']);
+          $blob = $this->nub->blob->getBlob($header['blb_id']);
           $mailer->addStringAttachment($blob['blb_data'], $blob['blb_filename']);
           break;
 
