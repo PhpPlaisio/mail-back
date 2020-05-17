@@ -1,0 +1,7 @@
+<database>
+    <requires>
+        <table>ABC_MAIL_MESSAGE</table>
+        <table>ABC_AUTH_COMPANY</table>
+        <table>ABC_AUTH_USER</table>
+    </requires>
+</database>
