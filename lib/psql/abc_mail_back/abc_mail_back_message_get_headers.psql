@@ -3,11 +3,12 @@
  *
  * @param p_cmp_id The ID of the company (safeguard).
  * @param p_elm_id The ID of the mail message.
+ *
+ * @type rows
  */
 create procedure abc_mail_back_message_get_headers(in p_cmp_id @abc_mail_message_header.cmp_id%type@,
                                                    in p_elm_id @abc_mail_message_header.elm_id%type@)
 reads sql data
--- type: rows
 begin
   select emh_id
   ,      blb_id

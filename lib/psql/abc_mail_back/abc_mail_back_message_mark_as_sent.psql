@@ -3,11 +3,12 @@
  *
  * @param p_cmp_id The ID of the company (safeguard).
  * @param p_elm_id The ID of the mail message.
+ *
+ * @type none
  */
 create procedure abc_mail_back_message_mark_as_sent(in p_cmp_id @abc_mail_message.cmp_id%type@,
                                                     in p_elm_id @abc_mail_message.elm_id%type@)
 modifies sql data
--- type: none
 begin
   update ABC_MAIL_MESSAGE
   set    elm_sent = now()
