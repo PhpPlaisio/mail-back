@@ -103,7 +103,7 @@ abstract class MailerCommand extends Command
    */
   protected function changeCompany(int $cmpId): void
   {
-    if ($this->nub->company->cmpId!=$cmpId)
+    if ($this->nub->company->cmpId!==$cmpId)
     {
       $this->nub->company = new UniCompanyResolver($cmpId);
     }
@@ -201,13 +201,13 @@ abstract class MailerCommand extends Command
   {
     $blob = $this->nub->blob->getBlob($message['blb_id_body']);
 
-    preg_match('/^([^;]*);\s*charset=(.*)$/', $blob['blb_mime_type'], $matches);
-    if (sizeof($matches)!=3)
+    preg_match('/^(?<type>[^;]*);\s*charset=(?<charset>.*)$/', $blob['blb_mime_type'], $matches);
+    if (sizeof($matches)!==3)
     {
       throw new RuntimeException("Invalid mime type '%s'", $blob['blb_mime_type']);
     }
-    $type    = trim($matches[1]);
-    $charset = trim($matches[2]);
+    $type    = trim($matches['type']);
+    $charset = trim($matches['charset']);
 
     $mailer->isHTML(($type=='text/html'));
     $mailer->CharSet = $charset;
@@ -313,7 +313,7 @@ abstract class MailerCommand extends Command
       $this->nub->DL->abcMailBackMessageMarkAsPickedUp($message['cmp_id'], $message['elm_id']);
       $this->nub->DL->commit();
 
-      if ($message['elm_number_from']!=1)
+      if ($message['elm_number_from']!==1)
       {
         throw new RuntimeException('PHPMailer does not support multiple from addresses');
       }
