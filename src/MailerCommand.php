@@ -7,7 +7,7 @@ use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 use Plaisio\C;
 use Plaisio\CompanyResolver\UniCompanyResolver;
-use Plaisio\PlaisioKernel;
+use Plaisio\Console\Command\PlaisioKernelCommand;
 use Psr\Log\LoggerInterface;
 use SetBased\Exception\FallenException;
 use SetBased\Exception\RuntimeException;
@@ -19,47 +19,43 @@ use Symfony\Component\Console\Command\Command;
 abstract class MailerCommand extends Command
 {
   //--------------------------------------------------------------------------------------------------------------------
+  use PlaisioKernelCommand;
+
+  //--------------------------------------------------------------------------------------------------------------------
   /**
    * The maximum number of unsent mails processed per batch.
    *
    * @var int
    */
-  static protected $batchSize = 100;
+  static protected int $batchSize = 100;
 
   /**
    * The basename of the lock file.
    *
    * @var string
    */
-  protected static $lockFilename = 'mailer.lock';
+  protected static string $lockFilename = 'mailer.lock';
 
   /**
    * If true this command will terminate.
    *
    * @var bool
    */
-  static protected $terminate = false;
+  static protected bool $terminate = false;
 
   /**
    * The logger.
    *
    * @var LoggerInterface
    */
-  protected $logger;
-
-  /**
-   * The kernel of PhpPlaisio.
-   *
-   * @var PlaisioKernel
-   */
-  protected $nub;
+  protected LoggerInterface $logger;
 
   /**
    * Array with domains for which we are authorized to send email.
    *
    * @var array
    */
-  private $domains;
+  private array $domains;
 
   //--------------------------------------------------------------------------------------------------------------------
   /**
