@@ -198,7 +198,7 @@ abstract class MailerCommand extends Command
     $blob = $this->nub->blob->getBlob($message['blb_id_body']);
 
     preg_match('/^(?<type>[^;]*);\s*charset=(?<charset>.*)$/', $blob['blb_mime_type'], $matches);
-    if (sizeof($matches)!==3)
+    if (sizeof($matches)!==5)
     {
       throw new RuntimeException("Invalid mime type '%s'", $blob['blb_mime_type']);
     }
