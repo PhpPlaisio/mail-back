@@ -20,7 +20,7 @@
 <a href="https://packagist.org/packages/plaisio/mail-back"><img src="https://poser.pugx.org/plaisio/mail-back/v/stable" alt="Latest Stable Version"/></a>
 </td>
 <td>
-<a href="https:///scrutinizer-ci.com/g/PhpPlaisio/mail-back/?branch=master"><img src="https:///scrutinizer-ci.com/g/PhpPlaisio/mail-back/badges/quality-score.png?b=master" alt="Scrutinizer Code Quality"/></a>
+<a href="https://scrutinizer-ci.com/g/PhpPlaisio/mail-back/?branch=master"><img src="https://scrutinizer-ci.com/g/PhpPlaisio/mail-back/badges/quality-score.png?b=master" alt="Scrutinizer Code Quality"/></a>
 </td>
 </tr>
 </tbody>
