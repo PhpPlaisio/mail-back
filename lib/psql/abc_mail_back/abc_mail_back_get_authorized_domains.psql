@@ -3,10 +3,9 @@
  *
  * @type rows
  */
-create procedure abc_mail_back_get_authorized_domains()
-reads sql data
+create procedure abc_mail_back_get_authorized_domains ()
+  reads sql data
 begin
   select atd_domain_name
-  from   ABC_MAIL_AUTHORIZED_DOMAIN
-  ;
+  from ABC_MAIL_AUTHORIZED_DOMAIN;
 end

@@ -6,13 +6,15 @@
  *
  * @type none
  */
-create procedure abc_mail_back_message_mark_as_sent(in p_cmp_id @abc_mail_message.cmp_id%type@,
-                                                    in p_elm_id @abc_mail_message.elm_id%type@)
-modifies sql data
+create procedure abc_mail_back_message_mark_as_sent
+(
+  in p_cmp_id smallint(5) unsigned, -- type: ABC_MAIL_MESSAGE.cmp_id
+  in p_elm_id int(10) unsigned --      type: ABC_MAIL_MESSAGE.elm_id
+)
+  modifies sql data
 begin
   update ABC_MAIL_MESSAGE
-  set    elm_sent = now()
-  where  cmp_id = p_cmp_id
-  and    elm_id = p_elm_id
-  ;
+  set elm_sent = now()
+  where cmp_id = p_cmp_id
+    and elm_id = p_elm_id;
 end

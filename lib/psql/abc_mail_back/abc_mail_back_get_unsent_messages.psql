@@ -5,23 +5,25 @@
  *
  * @type rows
  */
-create procedure abc_mail_back_get_unsent_messages(in p_bath_size bigint)
-reads sql data
+create procedure abc_mail_back_get_unsent_messages
+(
+  in p_bath_size bigint
+)
+  reads sql data
 begin
   select elm_id
-  ,      cmp_id
-  ,      blb_id_body
-  ,      elm_address
-  ,      elm_name
-  ,      elm_subject
-  ,      elm_number_from
-  ,      elm_number_to
-  ,      elm_number_cc
-  ,      elm_number_bcc
-  from   ABC_MAIL_MESSAGE
-  where  elm_picked_up is null
-  and    elm_sent      is null
+       , cmp_id
+       , blb_id_body
+       , elm_address
+       , elm_name
+       , elm_subject
+       , elm_number_from
+       , elm_number_to
+       , elm_number_cc
+       , elm_number_bcc
+  from ABC_MAIL_MESSAGE
+  where elm_picked_up is null
+    and elm_sent is null
   order by elm_id
-  limit 0, p_bath_size
-  ;
+  limit 0, p_bath_size;
 end
